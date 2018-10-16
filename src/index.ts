@@ -49,6 +49,7 @@ const readNbtFile = (uuid: string, folder: string, fileExtension: string) => {
         reject(err);
       }
       data = toCamel(data).value;
+      console.log(data);
       data = stripValue(data);
     });
   });
@@ -67,7 +68,12 @@ const stripValue = data => {
       return item;
     });
   } else {
-    return Object.assign({}, ...Object.keys(data).map(key => ({ [key]: data[key].value })));
+    return Object.assign(
+      {},
+      ...Object.keys(data).map(key => ({
+        [key]: typeof data[key].value === 'object' ? stripValue(data[key].value) : data[key].value,
+      })),
+    );
   }
 };
 
