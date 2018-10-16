@@ -25,8 +25,9 @@ export const getPlayerPokemonAsync = async (uuid: string) => {
     pokemonValue.party2.value,
     pokemonValue.party3.value,
     pokemonValue.party4.value,
-    pokemonValue.party5.value
+    pokemonValue.party5.value,
   ];
+
   return pokemonArray;
 };
 
@@ -47,8 +48,56 @@ const readNbtFile = (uuid: string, folder: string, fileExtension: string) => {
       if (err) {
         reject(err);
       }
-
-      resolve(data);
+      data = toCamel(data).value;
+      data = stripValue(data);
     });
   });
 };
+
+const nbtDataFormatter = (data: any) => {
+  return Object.assign({}, ...Object.keys(data).map(key => ({ [toCamel(key)]: toCamel(data[key]) })));
+};
+
+const stripValue = data => {
+  if (data instanceof Array) {
+    return data.map(item => {
+      if (typeof item === 'object') {
+        item = stripValue(item);
+      }
+      return item;
+    });
+  } else {
+    return Object.assign({}, ...Object.keys(data).map(key => ({ [key]: data[key].value })));
+  }
+};
+
+const fixKey = (key: string): string => {
+  const split = key.split('');
+  split[0] = split[0].toLowerCase();
+  return split.join('').toString();
+};
+
+function toCamel(o) {
+  let newO, origKey, newKey, value;
+  if (o instanceof Array) {
+    return o.map(value => {
+      if (typeof value === 'object') {
+        value = toCamel(value);
+      }
+      return value;
+    });
+  } else {
+    newO = {};
+    for (origKey in o) {
+      if (o.hasOwnProperty(origKey)) {
+        newKey = (origKey.charAt(0).toLowerCase() + origKey.slice(1) || origKey).toString();
+        value = o[origKey];
+        if (value instanceof Array || (value !== null && value.constructor === Object)) {
+          value = toCamel(value);
+        }
+        newO[newKey] = value;
+      }
+    }
+  }
+  return newO;
+}
